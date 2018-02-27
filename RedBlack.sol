@@ -96,6 +96,16 @@ library RedBlack {
     }
   }
 
+  function newNode(uint k, uint v) internal returns (uint n) {
+    assembly {
+        let p := mload(0x40) //load heap pointer
+        n := p
+        mstore(add(p, mul(0x04, 0x20)), k)
+        mstore(add(p, mul(0x05, 0x20)), v)
+        mstore(0x40, add(p, mul(0x06, 0x20))) //inc heap pointer
+    }
+  }
+
   function writeNode(uint d, node memory n) internal {
     for (uint i = 0; i < 6; ++i) {
       assembly {
