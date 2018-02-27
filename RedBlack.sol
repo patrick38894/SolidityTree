@@ -5,11 +5,11 @@ library RedBlack {
     uint left;
     uint right;
     uint isBlack;
-    uint data;
+    uint key;
+    uint value;
   }
 
   // memory hacking //
-  // #YOLO
 
   function parent(uint n) returns (uint) {
     uint p;
@@ -43,13 +43,22 @@ library RedBlack {
     return p;
   }
 
-  function data(uint n) returns (uint) {
+  function key(uint n) returns (uint) {
     uint p;
     assembly {
       p := mload(add(p, mul(0x04, 0x20)))
     }
     return p;
   }
+
+  function value(uint n) returns (uint) {
+    uint p;
+    assembly {
+      p := mload(add(p, mul(0x05, 0x20)))
+    }
+    return p;
+  }
+
 
   function writeParent(uint n, uint p) {
     assembly {
@@ -75,22 +84,28 @@ library RedBlack {
     }
   }
 
-  function writeData(uint n, uint d) {
+  function writeKey(uint n, uint d) {
     assembly {
       mstore(add(n, mul(0x04, 0x20)), d)
     }
   }
 
-  function writeNode(uint d, node memory n) {
-    for (uint i = 0; i < 5; ++i) {
+  function writeValue(uint n, uint d) {
+    assembly {
+      mstore(add(n, mul(0x05, 0x20)), d)
+    }
+  }
+
+  function writeNode(uint d, node memory n) internal {
+    for (uint i = 0; i < 6; ++i) {
       assembly {
-        mstore(add(d,mul(i, 0x20)), mload(add(n, mul(i, 0x20))))
+        mstore(add(d, mul(i, 0x20)), mload(add(n, mul(i, 0x20))))
       }
     }
   }
 
   function nodeCopy(uint d, uint s) returns (uint) {
-    for (uint i = 0; i < 5; ++i) {
+    for (uint i = 0; i < 6; ++i) {
       assembly {
         mstore(add(d,mul(i, 0x20)), mload(add(s, mul(i, 0x20))))
       }
@@ -152,7 +167,7 @@ library RedBlack {
   }
 
   function insertRecurse(uint root, uint n) {
-    if (root != 0 && data(n) < data(root)) {
+    if (root != 0 && key(n) < key(root)) {
       if (left(root) != 0) {
         insertRecurse(left(root), n);
         return;
@@ -227,4 +242,124 @@ library RedBlack {
     writeIsBlack(g, 0);
   }
 
+  //remove
+
+  function remove(uint n) {
+    if (left(n) == 0 && right(n) == 0)
+    {
+      if (left(parent(n)) == n)
+        writeLeft(parent(n), 0);
+      else
+        writeRight(parent(n), 0);
+    }
+    else removeOneChild(n);
+  }
+
+  function removeOneChild(uint n) {
+    uint child = (right(n) != 0) ? left(n) : right(n);
+
+    writeParent(child, parent(n));
+    if (left(parent(n)) == n)
+      writeLeft(parent(n), child);
+    else
+      writeRight(parent(n), child);
+    
+    if (isBlack(n) != 0) {
+      if (isBlack(child) == 0)
+        writeIsBlack(child, 1);
+      else
+        deleteCase1(child);
+    }
+    //free n would go here if we needed it
+  }
+
+  function deleteCase1(uint n) {
+    if (parent(n) != 0)
+      deleteCase2(n);
+  }
+
+  //note if left/right(NULL) returns 0 these will work.
+  //this means we need to reserve memory[NULL] to memory[NULL+5] to be 0's
+  //and possibly replace instances of '0' with 'NULL'
+  //maybe NULL = uint256(-5) ?
+
+  function deleteCase2(uint n) {
+    uint s = sibling(n);
+
+    if (isBlack(s) == 0) {
+      writeIsBlack(parent(n), 0);
+      writeIsBlack(s, 1);
+      if (n == left(parent(n)))
+        rotateLeft(parent(n));
+      else
+        rotateRight(parent(n));
+    }
+    deleteCase3(n);
+  }
+
+  function deleteCase3(uint n) {
+    uint s = sibling(n);
+    
+    if ((isBlack(parent(n)) != 0) &&
+        (isBlack(s) != 0) &&
+        (isBlack(left(s)) != 0) &&
+        (isBlack(right(s)) != 0)) {
+      writeIsBlack(s, 0);
+      deleteCase1(parent(n));
+    }
+    else
+      deleteCase4(n);
+  }
+
+  function deleteCase4(uint n) {
+    uint s = sibling(n);
+ 
+    if ((isBlack(parent(n)) == 0) &&
+        (isBlack(s) != 0) &&
+        (isBlack(left(s)) != 0) &&
+        (isBlack(right(s)) != 0)) {
+      writeIsBlack(s, 0);
+      writeIsBlack(parent(n), 0);
+    }
+    else
+      deleteCase5(n);
+  }
+
+  function deleteCase5(uint n) {
+    uint s = sibling(n);
+
+    if (isBlack(s) != 0) {
+      if ((n == left(parent(n))) &&
+          (isBlack(right(s)) != 0) &&
+          (isBlack(left(s)) == 0)) {
+        writeIsBlack(s, 0);
+        writeIsBlack(left(s), 0);
+        rotateRight(s);
+      }
+      else if ((n == right(parent(n))) &&
+               (isBlack(left(s)) != 0) &&
+               (isBlack(right(s)) == 0)) {
+        writeIsBlack(s, 0);
+        writeIsBlack(right(s), 1);
+        rotateLeft(s);
+      }
+    }
+    deleteCase6(n);
+  }
+
+  function deleteCase6(uint n) {
+    uint s = sibling(n);
+
+    writeIsBlack(s, isBlack(parent(n)));
+    writeIsBlack(parent(n), 1);
+
+    if (n == left(parent(n))) {
+      writeIsBlack(right(s), 1);
+      rotateLeft(parent(n));
+    }
+    else {
+      writeIsBlack(left(s), 1);
+      rotateRight(parent(n));
+    }
+  }
 }
