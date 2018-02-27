@@ -69,7 +69,7 @@ library RedBlack {
     }
   }
 
-  function writeIsBlack(uint n, uint b) constant {
+  function writeIsBlack(uint n, uint b) {
     assembly {
       mstore(add(n, mul(0x03, 0x20)), b)
     }
