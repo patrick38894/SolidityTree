@@ -11,7 +11,7 @@ contract TreeTest {
     tree.insert(25,25);
     tree.insert(10,10);
 
-    uint nodeP = tree.root;
+    uint32 nodeP = tree.root;
     results.push(isBlack(nodeP) != 0);
 
     nodeP = tree.search(15);
@@ -58,14 +58,14 @@ contract TreeTest {
     tree.insert(25,25);
     tree.insert(23,23);
 
-    uint nodeP = tree.root;
+    uint32 nodeP = tree.root;
     results.push(isBlack(nodeP));
     results.push(tree.size == 4);
 
     tree.delete(15);
     results.push(tree.size == 3);
 
-    uint nodeP = tree.root;
+    nodeP = tree.root;
     results.push(value(nodeP) == 23);
 
     results.push(testBSTProps(tree.root));
@@ -81,38 +81,38 @@ contract TreeTest {
     tree.insert(23,23);
     tree.insert(27,27);
 
-    uint nodeP = tree.root;
+    uint32 nodeP = tree.root;
     results.push(isBlack(nodeP));
     results.push(tree.size == 5);
 
-    uint nodeP = right(tree.root);
+    nodeP = right(tree.root);
     results.push(key(nodeP) == 25);
 
-    uint nodeP = left(right(tree.root));
+    nodeP = left(right(tree.root));
     results.push(key(nodeP) == 23);
     results.push(isBlack(nodeP) == 0);
 
     tree.delete(25);
     results.push(tree.size == 4);
    
-    uint nodeP = tree.root;
+    nodeP = tree.root;
     results.push(key(nodeP) == 20);
     
-    uint nodeP = right(tree.root);
+    nodeP = right(tree.root);
     results.push(key(nodeP) == 27);
     results.push(isBlack(nodeP) != 0);
     
-    uint nodeP = right(right(tree.root));
+    nodeP = right(right(tree.root));
     results.push(nodeP == 0);
     
-    uint nodeP = left(right(tree.root));
+    nodeP = left(right(tree.root));
     results.push(key(nodeP) == 23);
     results.push(isBlack(nodeP) == 0);
     
     results.push(testBSTProps(tree.root));
   }
 
-  function testBSTProps(uint root) returns (bool succ) { 
+  function testBSTProps(uint32 root) returns (bool succ) { 
     succ = true;
     if (root != 0) {
       if (left(root) != 0)
