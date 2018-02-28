@@ -1,6 +1,7 @@
-library RedBlack {
+library RedBlackTree {
 
-  const uint MAX_HEAP = 0xFFFFFFFF;
+  const uint MAX_HEAP = 0x7FFFFFFF;
+  const uint BLACK_MASK = 0x80000000;
 
   struct MemMap {
     uint32 root;
@@ -10,27 +11,26 @@ library RedBlack {
   /*
   // this is the memory layout of the nodes
   struct node {
-    uint32 parent;
+    uint32 flag|parent;
     uint32 left;
     uint32 right;
-    uint32 isBlack;
     uint32 key;
     uint32 value;
-    uint32 padding;
-    uint32 padding;
   }
   */
 
   // memory hacking //
 
   function parent(uint32 n) returns (uint32) {
-    uint32 p;
     //null checks in the lookup functions allow us to treat
     //null nodes as regular nodes which simplifies some of the
     //logic in the remove functions
+    uint32 p;
+
     if (n != 0) {
       assembly {
-        p := mload(n)
+        //first bit is reserved for the flag
+        p := and(mload(n), not(BLACK_MASK));
       }
     }
     return p;
@@ -60,7 +60,7 @@ library RedBlack {
     uint32 p;
     if (n != 0) {
       assembly {
-        p := mload(add(p, mul(0x03, 0x20)))
+        p := and(mload(n), BLACK_MASK);
       }
     }
     return p;
@@ -70,7 +70,7 @@ library RedBlack {
     uint32 p;
     if (n != 0) {
       assembly {
-        p := mload(add(p, mul(0x04, 0x20)))
+        p := mload(add(p, mul(0x03, 0x20)))
       }
     }
     return p;
@@ -80,7 +80,7 @@ library RedBlack {
     uint32 p;
     if (n != 0) {
       assembly {
-        p := mload(add(p, mul(0x05, 0x20)))
+        p := mload(add(p, mul(0x04, 0x20)))
       }
     }
     return p;
@@ -90,7 +90,8 @@ library RedBlack {
   function writeParent(uint32 n, uint32 p) {
     //no null checks here. dont be stupid
     assembly {
-      mstore(n, p)
+      let b := and(mload(n), BLACK_MASK);
+      mstore(n, or(b, p))
     }
   }
 
@@ -108,34 +109,35 @@ library RedBlack {
 
   function writeIsBlack(uint32 n, uint32 b) {
     assembly {
-      mstore(add(n, mul(0x03, 0x20)), b)
+      let p := and(mload(n), not(BLACK_MASK));
+      mstore(n, or(b, p))
     }
   }
 
   function writeKey(uint32 n, uint32 k) {
     assembly {
-      mstore(add(n, mul(0x04, 0x20)), k)
+      mstore(add(n, mul(0x03, 0x20)), k)
     }
   }
 
   function writeValue(uint32 n, uint32 v) {
     assembly {
-      mstore(add(n, mul(0x05, 0x20)), v)
+      mstore(add(n, mul(0x04, 0x20)), v)
     }
   }
 
   function newNode(uint32 k, uint32 v) internal returns (uint32 n) {
     assembly {
         n := mload(0x40) //load heap pointer
-        mstore(add(n, mul(0x04, 0x20)), k)
-        mstore(add(n, mul(0x05, 0x20)), v)
-        mstore(0x40, add(n, mul(0x06, 0x20))) //inc heap pointer
+        mstore(add(n, mul(0x03, 0x20)), k)
+        mstore(add(n, mul(0x04, 0x20)), v)
+        mstore(0x40, add(n, mul(0x05, 0x20))) //inc heap pointer
     }
-    require(n < MAX_HEAP - 5); //dont overflow pointers
+    require(n < MAX_HEAP - 4); //dont overflow pointers
   }
 
   function nodeCopy(uint32 d, uint32 s) returns (uint32) {
-    for (uint32 i = 0; i < 6; ++i) {
+    for (uint32 i = 0; i < 5; ++i) {
       assembly {
         mstore(add(d,mul(i, 0x20)), mload(add(s, mul(i, 0x20))))
       }
