@@ -1,6 +1,6 @@
 contract TreeTest {
   using RedBlack for RBT;
-  bool [] results;
+  bool [] public results;
 
   function test1() {
     RBT tree;
@@ -43,9 +43,84 @@ contract TreeTest {
     nodeP = tree.search(8);
     results.push(isBlack(nodeP) != 0);
 
-    nodeP = tree.search(9);
-    results.push(key(left(nodeP)) == 8);
+    nodeP = left(tree.search(9));
+    results.push(key(nodeP) == 8);
 
-    results.push(tree.testBSTProps);
+    results.push(testBSTProps(tree.root));
+  }
+
+  function test2() {
+    RBT tree;
+    delete results;
+
+    tree.insert(20,20);
+    tree.insert(15,15);
+    tree.insert(25,25);
+    tree.insert(23,23);
+
+    uint nodeP = tree.root;
+    results.push(isBlack(nodeP));
+    results.push(tree.size == 4);
+
+    tree.delete(15);
+    results.push(tree.size == 3);
+
+    uint nodeP = tree.root;
+    results.push(value(nodeP) == 23);
+
+    results.push(testBSTProps(tree.root));
+  }
+
+  function test3() {
+    RBT tree;
+    delete results;
+
+    tree.insert(20,20);
+    tree.insert(15,15);
+    tree.insert(25,25);
+    tree.insert(23,23);
+    tree.insert(27,27);
+
+    uint nodeP = tree.root;
+    results.push(isBlack(nodeP));
+    results.push(tree.size == 5);
+
+    uint nodeP = right(tree.root);
+    results.push(key(nodeP) == 25);
+
+    uint nodeP = left(right(tree.root));
+    results.push(key(nodeP) == 23);
+    results.push(isBlack(nodeP) == 0);
+
+    tree.delete(25);
+    results.push(tree.size == 4);
+   
+    uint nodeP = tree.root;
+    results.push(key(nodeP) == 20);
+    
+    uint nodeP = right(tree.root);
+    results.push(key(nodeP) == 27);
+    results.push(isBlack(nodeP) != 0);
+    
+    uint nodeP = right(right(tree.root));
+    results.push(nodeP == 0);
+    
+    uint nodeP = left(right(tree.root));
+    results.push(key(nodeP) == 23);
+    results.push(isBlack(nodeP) == 0);
+    
+    results.push(testBSTProps(tree.root));
+  }
+
+  function testBSTProps(uint root) returns (bool succ) { 
+    succ = true;
+    if (root != 0) {
+      if (left(root) != 0)
+        succ &= key(root) >= key(left(root));
+      if (right(root) != 0)
+        succ &= key(root) <= key(right(root));
+      succ &= testBSTProps(left(root));
+      succ &= testBSTProps(right(root));
+    }
   }
 }
