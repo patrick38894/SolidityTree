@@ -1,121 +1,141 @@
 library RedBlack {
 
-  struct node {
-    uint parent;
-    uint left;
-    uint right;
-    uint isBlack;
-    uint key;
-    uint value;
+  const uint MAX_HEAP = 0xFFFFFFFF;
+
+  struct MemMap {
+    uint32 root;
+    uint32 size;
   }
+
+  /*
+  // this is the memory layout of the nodes
+  struct node {
+    uint32 parent;
+    uint32 left;
+    uint32 right;
+    uint32 isBlack;
+    uint32 key;
+    uint32 value;
+    uint32 padding;
+    uint32 padding;
+  }
+  */
 
   // memory hacking //
 
-  function parent(uint n) returns (uint) {
-    uint p;
-    assembly {
-      p := mload(n)
+  function parent(uint32 n) returns (uint32) {
+    uint32 p;
+    //null checks in the lookup functions allow us to treat
+    //null nodes as regular nodes which simplifies some of the
+    //logic in the remove functions
+    if (n != 0) {
+      assembly {
+        p := mload(n)
+      }
     }
     return p;
   }
 
-  function left(uint n) returns (uint) {
-    uint p;
-    assembly {
-      p := mload(add(p, mul(0x01, 0x20)))
+  function left(uint32 n) returns (uint32) {
+    uint32 p;
+    if (n != 0) {
+      assembly {
+        p := mload(add(p, mul(0x01, 0x20)))
+      }
     }
     return p;
   }
 
-  function right(uint n) returns (uint) {
-    uint p;
-    assembly {
-      p := mload(add(p, mul(0x02, 0x20)))
+  function right(uint32 n) returns (uint32) {
+    uint32 p;
+    if (n != 0) {
+      assembly {
+        p := mload(add(p, mul(0x02, 0x20)))
+      }
     }
     return p;
   }
 
-  function isBlack(uint n) returns (uint) {
-    uint p;
-    assembly {
-      p := mload(add(p, mul(0x03, 0x20)))
+  function isBlack(uint32 n) returns (uint32) {
+    uint32 p;
+    if (n != 0) {
+      assembly {
+        p := mload(add(p, mul(0x03, 0x20)))
+      }
     }
     return p;
   }
 
-  function key(uint n) returns (uint) {
-    uint p;
-    assembly {
-      p := mload(add(p, mul(0x04, 0x20)))
+  function key(uint32 n) returns (uint32) {
+    uint32 p;
+    if (n != 0) {
+      assembly {
+        p := mload(add(p, mul(0x04, 0x20)))
+      }
     }
     return p;
   }
 
-  function value(uint n) returns (uint) {
-    uint p;
-    assembly {
-      p := mload(add(p, mul(0x05, 0x20)))
+  function value(uint32 n) returns (uint32) {
+    uint32 p;
+    if (n != 0) {
+      assembly {
+        p := mload(add(p, mul(0x05, 0x20)))
+      }
     }
     return p;
   }
 
 
-  function writeParent(uint n, uint p) {
+  function writeParent(uint32 n, uint32 p) {
+    //no null checks here. dont be stupid
     assembly {
       mstore(n, p)
     }
   }
 
-  function writeLeft(uint n, uint l) {
+  function writeLeft(uint32 n, uint32 l) {
     assembly {
       mstore(add(n, mul(0x01, 0x20)), l)
     }
   }
 
-  function writeRight(uint n, uint r) {
+  function writeRight(uint32 n, uint32 r) {
     assembly {
       mstore(add(n, mul(0x02, 0x20)), r)
     }
   }
 
-  function writeIsBlack(uint n, uint b) {
+  function writeIsBlack(uint32 n, uint32 b) {
     assembly {
       mstore(add(n, mul(0x03, 0x20)), b)
     }
   }
 
-  function writeKey(uint n, uint d) {
+  function writeKey(uint32 n, uint32 k) {
     assembly {
-      mstore(add(n, mul(0x04, 0x20)), d)
+      mstore(add(n, mul(0x04, 0x20)), k)
     }
   }
 
-  function writeValue(uint n, uint d) {
+  function writeValue(uint32 n, uint32 v) {
     assembly {
-      mstore(add(n, mul(0x05, 0x20)), d)
+      mstore(add(n, mul(0x05, 0x20)), v)
     }
   }
 
-  function newNode(uint k, uint v) internal returns (uint n) {
+  function newNode(uint32 k, uint32 v) internal returns (uint32 n) {
     assembly {
-        let p := mload(0x40) //load heap pointer
-        n := p
-        mstore(add(p, mul(0x04, 0x20)), k)
-        mstore(add(p, mul(0x05, 0x20)), v)
-        mstore(0x40, add(p, mul(0x06, 0x20))) //inc heap pointer
+        n := mload(0x40) //load heap pointer
+        mstore(add(n, mul(0x04, 0x20)), k)
+        mstore(add(n, mul(0x05, 0x20)), v)
+        mstore(0x40, add(n, mul(0x06, 0x20))) //inc heap pointer
     }
+    require(n < MAX_HEAP - 5); //dont overflow pointers
   }
 
-  function writeNode(uint d, node memory n) internal {
-    for (uint i = 0; i < 6; ++i) {
-      assembly {
-        mstore(add(d, mul(i, 0x20)), mload(add(n, mul(i, 0x20))))
-      }
-    }
-  }
-
-  function nodeCopy(uint d, uint s) returns (uint) {
-    for (uint i = 0; i < 6; ++i) {
+  function nodeCopy(uint32 d, uint32 s) returns (uint32) {
+    for (uint32 i = 0; i < 6; ++i) {
       assembly {
         mstore(add(d,mul(i, 0x20)), mload(add(s, mul(i, 0x20))))
       }
@@ -124,16 +144,13 @@ library RedBlack {
 
   //utilities
   
-  function grandparent(uint n) returns (uint) {
-    uint p = parent(n);
-    if (p == 0)
-      return 0; //means no grandparent
-    else
-      return parent(p);
+  function grandparent(uint32 n) returns (uint32) {
+    uint32 p = parent(n);
+    return parent(p);
   } 
 
-  function sibling(uint n) returns (uint) {
-    uint p = parent(n);
+  function sibling(uint32 n) returns (uint32) {
+    uint32 p = parent(n);
     if (p == 0)
       return 0; //no sibling
     if (n == left(p))
@@ -142,23 +159,21 @@ library RedBlack {
       return left(p);
   }
 
-  function uncle(uint n) returns (uint) {
-    uint p = parent(n);
-    if (p == 0)
-      return 0;
+  function uncle(uint32 n) returns (uint32) {
+    uint32 p = parent(n);
     return sibling(p);
   }
 
-  function rotateLeft(uint n) returns (uint) {
-    uint nnew = right(n);
+  function rotateLeft(uint32 n) returns (uint32) {
+    uint32 nnew = right(n);
     nodeCopy(right(n), left(nnew));
     nodeCopy(left(nnew), n);
     nodeCopy(parent(nnew), parent(n));
     nodeCopy(parent(n), nnew);
   }
 
-  function rotateRight(uint n) returns (uint) {
-    uint nnew = left(n);
+  function rotateRight(uint32 n) returns (uint32) {
+    uint32 nnew = left(n);
     nodeCopy(left(n), right(nnew));
     nodeCopy(right(nnew), n);
     nodeCopy(parent(nnew), parent(n));
@@ -167,7 +182,7 @@ library RedBlack {
 
   // insert
 
-  function insert(uint root, uint n) returns (uint){
+  function insert(uint32 root, uint32 n) returns (uint32){
     insertRecurse(root, n);
     insertRepairTree(n);
     root = n;
@@ -176,7 +191,7 @@ library RedBlack {
     return root;
   }
 
-  function insertRecurse(uint root, uint n) {
+  function insertRecurse(uint32 root, uint32 n) {
     if (root != 0 && key(n) < key(root)) {
       if (left(root) != 0) {
         insertRecurse(left(root), n);
@@ -201,32 +216,39 @@ library RedBlack {
     writeIsBlack(n, 0);
   }
 
-  function insertRepairTree(uint n) {
+  function insertRepairTree(uint32 n) {
     if (parent(n) == 0)
       insertCase1(n);
     else if (isBlack(parent(n)) != 0)
-      return; //insertCase2 does nothing
+      insertCase2(n);
     else if (isBlack(uncle(n)) == 0)
       insertCase3(n);
     else
       insertCase4(n);
   }
 
-  function insertCase1(uint n) {
+  function insertCase1(uint32 n) {
+    //n is the root
     if (parent(n) == 0)
       writeIsBlack(n, 1);
   }
 
-  function insertCase3(uint n) {
+  function insertCase2(uint32 n) {
+    //parent is black, do nothing
+  }
+
+  function insertCase3(uint32 n) {
+    //parent and uncle are red
     writeIsBlack(parent(n), 1);
     writeIsBlack(uncle(n), 1);
     writeIsBlack(grandparent(n), 0);
     insertRepairTree(grandparent(n));
   }
 
-  function insertCase4(uint n) {
-    uint p = parent(n);
-    uint g = grandparent(n);
+  function insertCase4(uint32 n) {
+    //parent is red but uncle is black
+    uint32 p = parent(n);
+    uint32 g = grandparent(n);
 
     if (n == right(left(g))) {
       rotateLeft(p);
@@ -240,9 +262,9 @@ library RedBlack {
     insertCase4step2(n);
   }
 
-  function insertCase4step2(uint n) {
-    uint p = parent(n);
-    uint g = grandparent(n);
+  function insertCase4step2(uint32 n) {
+    uint32 p = parent(n);
+    uint32 g = grandparent(n);
    
     if (n == left(p))
       rotateRight(g);
@@ -254,7 +276,7 @@ library RedBlack {
 
   //remove
 
-  function remove(uint n) {
+  function remove(uint32 n) {
     if (left(n) == 0 && right(n) == 0)
     {
       if (left(parent(n)) == n)
@@ -265,8 +287,8 @@ library RedBlack {
     else removeOneChild(n);
   }
 
-  function removeOneChild(uint n) {
-    uint child = (right(n) != 0) ? left(n) : right(n);
+  function removeOneChild(uint32 n) {
+    uint32 child = (right(n) != 0) ? left(n) : right(n);
 
     writeParent(child, parent(n));
     if (left(parent(n)) == n)
@@ -283,18 +305,15 @@ library RedBlack {
     //free n would go here if we needed it
   }
 
-  function deleteCase1(uint n) {
+  function deleteCase1(uint32 n) {
+    //n is the new root
     if (parent(n) != 0)
       deleteCase2(n);
   }
 
-  //note if left/right(NULL) returns 0 these will work.
-  //this means we need to reserve memory[NULL] to memory[NULL+5] to be 0's
-  //and possibly replace instances of '0' with 'NULL'
-  //maybe NULL = uint256(-5) ?
-
-  function deleteCase2(uint n) {
-    uint s = sibling(n);
+  function deleteCase2(uint32 n) {
+    //sibling is red
+    uint32 s = sibling(n);
 
     if (isBlack(s) == 0) {
       writeIsBlack(parent(n), 0);
@@ -307,8 +326,9 @@ library RedBlack {
     deleteCase3(n);
   }
 
-  function deleteCase3(uint n) {
-    uint s = sibling(n);
+  function deleteCase3(uint32 n) {
+    //parent, sibling, and siblings children are black
+    uint32 s = sibling(n);
     
     if ((isBlack(parent(n)) != 0) &&
         (isBlack(s) != 0) &&
@@ -321,8 +341,9 @@ library RedBlack {
       deleteCase4(n);
   }
 
-  function deleteCase4(uint n) {
-    uint s = sibling(n);
+  function deleteCase4(uint32 n) {
+    //sibling and siblings childer are black but parent is red
+    uint32 s = sibling(n);
  
     if ((isBlack(parent(n)) == 0) &&
         (isBlack(s) != 0) &&
@@ -335,8 +356,9 @@ library RedBlack {
       deleteCase5(n);
   }
 
-  function deleteCase5(uint n) {
-    uint s = sibling(n);
+  function deleteCase5(uint32 n) {
+    //sibling is black with one red child which has a black child
+    uint32 s = sibling(n);
 
     if (isBlack(s) != 0) {
       if ((n == left(parent(n))) &&
@@ -357,8 +379,9 @@ library RedBlack {
     deleteCase6(n);
   }
 
-  function deleteCase6(uint n) {
-    uint s = sibling(n);
+  function deleteCase6(uint32 n) {
+    //sibling is black, sibling has one red shild
+    uint32 s = sibling(n);
 
     writeIsBlack(s, isBlack(parent(n)));
     writeIsBlack(parent(n), 1);
