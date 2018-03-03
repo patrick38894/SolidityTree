@@ -1,126 +1,124 @@
+import "RedBlack.sol";
+
 contract TreeTest {
-  using RedBlack for RBT;
-  bool [] public results;
+  using RedBlackTree for *;
 
   function test1() {
-    RBT tree;
-    delete results;
+    RedBlackTree.Tree tree;
 
-    tree.insert(20,20);
-    tree.insert(15,15);
-    tree.insert(25,25);
-    tree.insert(10,10);
+    tree.insert32(20,20);
+    tree.insert32(15,15);
+    tree.insert32(25,25);
+    tree.insert32(10,10);
 
     uint32 nodeP = tree.root;
-    results.push(isBlack(nodeP) != 0);
+    assert(RedBlackTree.isBlack(nodeP) != 0);
 
-    nodeP = tree.search(15);
-    results.push(isBlack(nodeP) != 0);
+    nodeP = tree.root.search(15);
+    assert(RedBlackTree.isBlack(nodeP) != 0);
 
-    nodeP = tree.search(25);
-    results.push(isBlack(nodeP) != 0);
+    nodeP = tree.root.search(25);
+    assert(RedBlackTree.isBlack(nodeP) != 0);
 
-    tree.insert(17,17);
-    tree.insert(8,8);
+    tree.insert32(17,17);
+    tree.insert32(8,8);
 
-    nodeP = tree.search(15);
-    results.push(isBlack(nodeP) == 0);
+    nodeP = tree.root.search(15);
+    assert(RedBlackTree.isBlack(nodeP) == 0);
 
-    nodeP = tree.search(10);
-    results.push(isBlack(nodeP) != 0);
+    nodeP = tree.root.search(10);
+    assert(RedBlackTree.isBlack(nodeP) != 0);
 
-    nodeP = tree.search(17);
-    results.push(isBlack(nodeP) != 0);
+    nodeP = tree.root.search(17);
+    assert(RedBlackTree.isBlack(nodeP) != 0);
 
-    nodeP = tree.search(8);
-    results.push(isBlack(nodeP) == 0);
+    nodeP = tree.root.search(8);
+    assert(RedBlackTree.isBlack(nodeP) == 0);
 
-    tree.insert(9,9);
+    tree.insert32(9,9);
 
-    nodeP = tree.search(10);
-    results.push(isBlack(nodeP) == 0);
+    nodeP = tree.root.search(10);
+    assert(RedBlackTree.isBlack(nodeP) == 0);
 
-    nodeP = tree.search(8);
-    results.push(isBlack(nodeP) != 0);
+    nodeP = tree.root.search(8);
+    assert(RedBlackTree.isBlack(nodeP) != 0);
 
-    nodeP = left(tree.search(9));
-    results.push(key(nodeP) == 8);
+    nodeP = RedBlackTree.left(tree.root.search(9));
+    assert(RedBlackTree.key(nodeP) == 8);
 
-    results.push(testBSTProps(tree.root));
+    assert(testBSTProps(tree.root));
   }
 
   function test2() {
-    RBT tree;
-    delete results;
+    RedBlackTree.Tree tree;
 
-    tree.insert(20,20);
-    tree.insert(15,15);
-    tree.insert(25,25);
-    tree.insert(23,23);
+    tree.insert32(20,20);
+    tree.insert32(15,15);
+    tree.insert32(25,25);
+    tree.insert32(23,23);
 
     uint32 nodeP = tree.root;
-    results.push(isBlack(nodeP));
-    results.push(tree.size == 4);
+    assert(RedBlackTree.isBlack(nodeP) != 0);
+    assert(tree.size == 4);
 
-    tree.delete(15);
-    results.push(tree.size == 3);
+    tree.remove(15);
+    assert(tree.size == 3);
 
     nodeP = tree.root;
-    results.push(value(nodeP) == 23);
+    assert(RedBlackTree.value32(nodeP) == 23);
 
-    results.push(testBSTProps(tree.root));
+    assert(testBSTProps(tree.root));
   }
 
   function test3() {
-    RBT tree;
-    delete results;
+    RedBlackTree.Tree tree;
 
-    tree.insert(20,20);
-    tree.insert(15,15);
-    tree.insert(25,25);
-    tree.insert(23,23);
-    tree.insert(27,27);
+    tree.insert32(20,20);
+    tree.insert32(15,15);
+    tree.insert32(25,25);
+    tree.insert32(23,23);
+    tree.insert32(27,27);
 
     uint32 nodeP = tree.root;
-    results.push(isBlack(nodeP));
-    results.push(tree.size == 5);
+    assert(RedBlackTree.isBlack(nodeP) != 0);
+    assert(tree.size == 5);
 
-    nodeP = right(tree.root);
-    results.push(key(nodeP) == 25);
+    nodeP = RedBlackTree.right(tree.root);
+    assert(RedBlackTree.key(nodeP) == 25);
 
-    nodeP = left(right(tree.root));
-    results.push(key(nodeP) == 23);
-    results.push(isBlack(nodeP) == 0);
+    nodeP = RedBlackTree.left(RedBlackTree.right(tree.root));
+    assert(RedBlackTree.key(nodeP) == 23);
+    assert(RedBlackTree.isBlack(nodeP) == 0);
 
-    tree.delete(25);
-    results.push(tree.size == 4);
+    tree.remove(25);
+    assert(tree.size == 4);
    
     nodeP = tree.root;
-    results.push(key(nodeP) == 20);
+    assert(RedBlackTree.key(nodeP) == 20);
     
-    nodeP = right(tree.root);
-    results.push(key(nodeP) == 27);
-    results.push(isBlack(nodeP) != 0);
+    nodeP = RedBlackTree.right(tree.root);
+    assert(RedBlackTree.key(nodeP) == 27);
+    assert(RedBlackTree.isBlack(nodeP) != 0);
     
-    nodeP = right(right(tree.root));
-    results.push(nodeP == 0);
+    nodeP = RedBlackTree.right(RedBlackTree.right(tree.root));
+    assert(nodeP == 0);
     
-    nodeP = left(right(tree.root));
-    results.push(key(nodeP) == 23);
-    results.push(isBlack(nodeP) == 0);
+    nodeP = RedBlackTree.left(RedBlackTree.right(tree.root));
+    assert(RedBlackTree.key(nodeP) == 23);
+    assert(RedBlackTree.isBlack(nodeP) == 0);
     
-    results.push(testBSTProps(tree.root));
+    assert(testBSTProps(tree.root));
   }
 
   function testBSTProps(uint32 root) returns (bool succ) { 
     succ = true;
     if (root != 0) {
-      if (left(root) != 0)
-        succ &= key(root) >= key(left(root));
-      if (right(root) != 0)
-        succ &= key(root) <= key(right(root));
-      succ &= testBSTProps(left(root));
-      succ &= testBSTProps(right(root));
+      if (RedBlackTree.left(root) != 0)
+        succ = succ && RedBlackTree.key(root) >= RedBlackTree.key(RedBlackTree.left(root));
+      if (RedBlackTree.right(root) != 0)
+        succ = succ && RedBlackTree.key(root) <= RedBlackTree.key(RedBlackTree.right(root));
+      succ = succ && testBSTProps(RedBlackTree.left(root));
+      succ = succ && testBSTProps(RedBlackTree.right(root));
     }
   }
 }
