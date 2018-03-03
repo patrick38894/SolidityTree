@@ -1,10 +1,12 @@
-import "RedBlack.sol";
+pragma solidity ^0.4.18;
+
+import "RedBlackTree.sol";
 
 contract TreeTest {
   using RedBlackTree for *;
 
-  function test1() {
-    RedBlackTree.Tree tree;
+  function test1() public {
+    RedBlackTree.Tree memory tree;
 
     tree.insert32(20,20);
     tree.insert32(15,15);
@@ -49,8 +51,8 @@ contract TreeTest {
     assert(testBSTProps(tree.root));
   }
 
-  function test2() {
-    RedBlackTree.Tree tree;
+  function test2() public {
+    RedBlackTree.Tree memory tree;
 
     tree.insert32(20,20);
     tree.insert32(15,15);
@@ -70,8 +72,8 @@ contract TreeTest {
     assert(testBSTProps(tree.root));
   }
 
-  function test3() {
-    RedBlackTree.Tree tree;
+  function test3() public {
+    RedBlackTree.Tree memory tree;
 
     tree.insert32(20,20);
     tree.insert32(15,15);
@@ -110,7 +112,7 @@ contract TreeTest {
     assert(testBSTProps(tree.root));
   }
 
-  function testBSTProps(uint32 root) returns (bool succ) { 
+  function testBSTProps(uint32 root) public returns (bool succ) { 
     succ = true;
     if (root != 0) {
       if (RedBlackTree.left(root) != 0)

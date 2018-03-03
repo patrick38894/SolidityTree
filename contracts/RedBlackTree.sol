@@ -1,3 +1,5 @@
+pragma solidity ^0.4.18;
+
 library RedBlackTree {
 
   struct Tree {
@@ -18,7 +20,7 @@ library RedBlackTree {
 
   // memory hacking //
 
-  function parent(uint32 n) internal returns (uint32 p) {
+  function parent(uint32 n) internal pure returns (uint32 p) {
     //null checks in the lookup functions allow us to treat
     //null nodes as regular nodes which simplifies some of the
     //logic in the remove functions
@@ -32,7 +34,7 @@ library RedBlackTree {
     }
   }
 
-  function left(uint32 n) internal returns (uint32) {
+  function left(uint32 n) internal pure returns (uint32) {
     uint l;
     uint mask = 0xFFFFFFFF << 32;
     if (n != 0) {
@@ -43,7 +45,7 @@ library RedBlackTree {
     return uint32(l >> 32);
   }
 
-  function right(uint32 n) internal returns (uint32) {
+  function right(uint32 n) internal pure returns (uint32) {
     uint r;
     uint mask = 0xFFFFFFFF << 64;
     if (n != 0) {
@@ -54,7 +56,7 @@ library RedBlackTree {
     return uint32(r >> 64);
   }
 
-  function isBlack(uint32 n) internal returns (uint32) {
+  function isBlack(uint32 n) internal pure returns (uint32) {
     uint b;
     uint mask = 0x80000000;
     if (n != 0) {
@@ -65,7 +67,7 @@ library RedBlackTree {
     return uint32(b >> 31);
   }
 
-  function key(uint32 n) internal returns (uint32) {
+  function key(uint32 n) internal pure returns (uint32) {
     uint k;
     uint mask = 0xFFFFFFFF << 96;
     if (n != 0) {
@@ -76,7 +78,7 @@ library RedBlackTree {
     return uint32(k >> 96);
   }
 
-  function value32(uint32 n) internal returns (uint32) {
+  function value32(uint32 n) internal pure returns (uint32) {
     //optional: define other valueN functions up to value128
     uint v;
     uint mask = uint(-1) << 128;
@@ -88,7 +90,7 @@ library RedBlackTree {
     return uint32(v >> 128);
   }
 
-  function value128(uint32 n) internal returns (uint128) {
+  function value128(uint32 n) internal pure returns (uint128) {
     //optional: define other valueN functions up to value128
     uint v;
     uint mask = uint(-1) << 128;
@@ -100,7 +102,7 @@ library RedBlackTree {
     return uint128(v >> 128);
   }
 
-  function writeParent(uint32 n, uint32 p) internal {
+  function writeParent(uint32 n, uint32 p) internal pure {
     //no null checks here. dont be stupid
     uint mask = uint(-1) ^ 0x7FFFFFFF;
     assembly {
@@ -108,7 +110,7 @@ library RedBlackTree {
     }
   }
 
-  function writeLeft(uint32 n, uint32 l) internal {
+  function writeLeft(uint32 n, uint32 l) internal pure {
     uint mask = uint(-1) ^ (0xFFFFFFFF << 32);
     uint shifted = uint(l) << 32;
     assembly {
@@ -117,7 +119,7 @@ library RedBlackTree {
     }
   }
 
-  function writeRight(uint32 n, uint32 r) internal {
+  function writeRight(uint32 n, uint32 r) internal pure {
     uint mask = uint(-1) ^ (0xFFFFFFFF << 64);
     uint shifted = uint(r) << 64;
     assembly {
@@ -126,14 +128,14 @@ library RedBlackTree {
     }
   }
 
-  function writeIsBlack(uint32 n, uint32 b) internal {
+  function writeIsBlack(uint32 n, uint32 b) internal pure {
     uint mask = uint(-1) ^ (0x80000000);
     assembly {
       mstore(n, or(b, and(mload(n), mask)))
     }
   }
 
-  function writeKey(uint32 n, uint32 k) internal {
+  function writeKey(uint32 n, uint32 k) internal pure {
     uint mask = uint(-1) ^ (0xFFFFFFFF << 96);
     uint shifted = uint(k) << 96;
     assembly {
@@ -142,7 +144,7 @@ library RedBlackTree {
     }
   }
 
-  function writeValue32(uint32 n, uint32 v) internal {
+  function writeValue32(uint32 n, uint32 v) internal pure {
     uint mask = uint(-1) ^ (0xFFFFFFFF << 128);
     uint shifted = uint(v) << 128;
     assembly {
@@ -151,7 +153,7 @@ library RedBlackTree {
     }
   }
 
-  function writeValue128(uint32 n, uint128 v) internal {
+  function writeValue128(uint32 n, uint128 v) internal pure {
     uint mask = uint(-1) << 128;
     uint shifted = uint(v) << 128;
     assembly {
@@ -160,14 +162,14 @@ library RedBlackTree {
     }
   }
 
-  function newNode() internal returns (uint32 n) {
+  function newNode() internal pure returns (uint32 n) {
     assembly {
         n := mload(0x40) //load heap pointer
         mstore(0x40, add(n, 32)) //inc heap pointer by 32 bytes
     }
   }
 
-  function nodeCopy(uint32 d, uint32 s) internal returns (uint32) {
+  function nodeCopy(uint32 d, uint32 s) internal pure returns (uint32) {
     assembly {
       mstore(d, mload(s))
     }
@@ -175,12 +177,12 @@ library RedBlackTree {
 
   //utilities
   
-  function grandparent(uint32 n) internal returns (uint32) {
+  function grandparent(uint32 n) internal pure returns (uint32) {
     uint32 p = parent(n);
     return parent(p);
   } 
 
-  function sibling(uint32 n) internal returns (uint32) {
+  function sibling(uint32 n) internal pure returns (uint32) {
     uint32 p = parent(n);
     if (p == 0)
       return 0; //no sibling
@@ -190,12 +192,12 @@ library RedBlackTree {
       return left(p);
   }
 
-  function uncle(uint32 n) internal returns (uint32) {
+  function uncle(uint32 n) internal pure returns (uint32) {
     uint32 p = parent(n);
     return sibling(p);
   }
 
-  function rotateLeft(uint32 n) internal returns (uint32) {
+  function rotateLeft(uint32 n) internal pure returns (uint32) {
     uint32 nnew = right(n);
     nodeCopy(right(n), left(nnew));
     nodeCopy(left(nnew), n);
@@ -203,7 +205,7 @@ library RedBlackTree {
     nodeCopy(parent(n), nnew);
   }
 
-  function rotateRight(uint32 n) internal returns (uint32) {
+  function rotateRight(uint32 n) internal pure returns (uint32) {
     uint32 nnew = left(n);
     nodeCopy(left(n), right(nnew));
     nodeCopy(right(nnew), n);
@@ -213,7 +215,7 @@ library RedBlackTree {
 
   // insert
 
-  function insertRecurse(uint32 root, uint32 n) private {
+  function insertRecurse(uint32 root, uint32 n) private pure {
     if (root != 0 && key(n) < key(root)) {
       if (left(root) != 0) {
         insertRecurse(left(root), n);
@@ -247,28 +249,28 @@ library RedBlackTree {
   }
 
 
-  function insertRepairTree(uint32 n) private {
+  function insertRepairTree(uint32 n) private pure {
     if (parent(n) == 0)
       insertCase1(n);
     else if (isBlack(parent(n)) != 0)
-      insertCase2(n);
+      insertCase2();
     else if (isBlack(uncle(n)) == 0)
       insertCase3(n);
     else
       insertCase4(n);
   }
 
-  function insertCase1(uint32 n) private {
+  function insertCase1(uint32 n) private pure {
     //n is the root
     if (parent(n) == 0)
       writeIsBlack(n, 1);
   }
 
-  function insertCase2(uint32 n) private {
+  function insertCase2() private pure {
     //parent is black, do nothing
   }
 
-  function insertCase3(uint32 n) private {
+  function insertCase3(uint32 n) private pure {
     //parent and uncle are red
     writeIsBlack(parent(n), 1);
     writeIsBlack(uncle(n), 1);
@@ -276,7 +278,7 @@ library RedBlackTree {
     insertRepairTree(grandparent(n));
   }
 
-  function insertCase4(uint32 n) private {
+  function insertCase4(uint32 n) private pure {
     //parent is red but uncle is black
     uint32 p = parent(n);
     uint32 g = grandparent(n);
@@ -293,7 +295,7 @@ library RedBlackTree {
     insertCase4step2(n);
   }
 
-  function insertCase4step2(uint32 n) private {
+  function insertCase4step2(uint32 n) private pure {
     uint32 p = parent(n);
     uint32 g = grandparent(n);
    
@@ -307,7 +309,7 @@ library RedBlackTree {
 
   //remove
 
-  function removeOneChild(uint32 n) private {
+  function removeOneChild(uint32 n) private pure {
     uint32 child = (right(n) != 0) ? left(n) : right(n);
 
     writeParent(child, parent(n));
@@ -325,13 +327,13 @@ library RedBlackTree {
     //free n would go here if we needed it
   }
 
-  function deleteCase1(uint32 n) private {
+  function deleteCase1(uint32 n) private pure {
     //n is the new root
     if (parent(n) != 0)
       deleteCase2(n);
   }
 
-  function deleteCase2(uint32 n) private {
+  function deleteCase2(uint32 n) private pure {
     //sibling is red
     uint32 s = sibling(n);
 
@@ -346,7 +348,7 @@ library RedBlackTree {
     deleteCase3(n);
   }
 
-  function deleteCase3(uint32 n) private {
+  function deleteCase3(uint32 n) private pure {
     //parent, sibling, and siblings children are black
     uint32 s = sibling(n);
     
@@ -361,7 +363,7 @@ library RedBlackTree {
       deleteCase4(n);
   }
 
-  function deleteCase4(uint32 n) private {
+  function deleteCase4(uint32 n) private pure {
     //sibling and siblings childer are black but parent is red
     uint32 s = sibling(n);
  
@@ -376,7 +378,7 @@ library RedBlackTree {
       deleteCase5(n);
   }
 
-  function deleteCase5(uint32 n) private {
+  function deleteCase5(uint32 n) private pure {
     //sibling is black with one red child which has a black child
     uint32 s = sibling(n);
 
@@ -399,7 +401,7 @@ library RedBlackTree {
     deleteCase6(n);
   }
 
-  function deleteCase6(uint32 n) private {
+  function deleteCase6(uint32 n) private pure {
     //sibling is black, sibling has one red shild
     uint32 s = sibling(n);
 
@@ -416,7 +418,7 @@ library RedBlackTree {
     }
   }
 
-  function search(uint32 n, uint32 k) internal returns (uint32) {
+  function search(uint32 n, uint32 k) internal pure returns (uint32) {
     if (n == 0 || key(n) == k)
       return n;
     else if (key(n) < k)
@@ -428,10 +430,10 @@ library RedBlackTree {
   //User-facing functions//
   /////////////////////////
 
-  function insert32(Tree memory tree, uint32 key, uint32 value) internal {
+  function insert32(Tree memory tree, uint32 k, uint32 v) internal pure {
     uint32 n = newNode();
-    writeKey(n, key);
-    writeValue32(n, value);
+    writeKey(n, k);
+    writeValue32(n, v);
     insertRecurse(tree.root, n);
     insertRepairTree(n);
     tree.root = n;
@@ -441,8 +443,8 @@ library RedBlackTree {
 
   //todo: in cases where root is modified, must update
   //todo: inc and dec size
-  function remove(Tree memory tree, uint32 key) internal {
-    uint32 n = search(tree.root, key);
+  function remove(Tree memory tree, uint32 k) internal pure {
+    uint32 n = search(tree.root, k);
     if (n == 0)
       return;
     if (left(n) == 0 && right(n) == 0)
@@ -458,7 +460,7 @@ library RedBlackTree {
     else removeOneChild(n);
   }
 
-  function find32(Tree memory tree, uint32 key) internal returns (uint32) {
-    return value32(search(tree.root, key));
+  function find32(Tree memory tree, uint32 k) internal pure returns (uint32) {
+    return value32(search(tree.root, k));
   }
 }
