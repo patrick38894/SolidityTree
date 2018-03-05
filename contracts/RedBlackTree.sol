@@ -50,7 +50,7 @@ library RedBlackTree {
     uint mask = 0xFFFFFFFF << 64;
     if (n != 0) {
       assembly {
-        r := mload(and(n, mask))
+        r := and(mload(n), mask)
       }
     }
     return uint32(r >> 64);
@@ -72,7 +72,7 @@ library RedBlackTree {
     uint mask = 0xFFFFFFFF << 96;
     if (n != 0) {
       assembly {
-        k := mload(and(n, mask))
+        k := and(mload(n), mask)
       }
     }
     return uint32(k >> 96);
@@ -84,7 +84,7 @@ library RedBlackTree {
     uint mask = uint(-1) << 128;
     if (n != 0) {
       assembly {
-        v := mload(and(n, mask))
+        v := and(mload(n), mask)
       }
     }
     return uint32(v >> 128);
@@ -96,7 +96,7 @@ library RedBlackTree {
     uint mask = uint(-1) << 128;
     if (n != 0) {
       assembly {
-        v := mload(and(n, mask))
+        v := and(mload(n), mask)
       }
     }
     return uint128(v >> 128);
